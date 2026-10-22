@@ -1,15 +1,139 @@
-"""Download Higgsfield results listed in hf_jobs.tsv into hf_images/ with timestamped names.
-Run on your own computer: python3 download_hf.py"""
-import os, subprocess
-from scenes import S
+"""Download all 120 Higgsfield images into ./hf_images with their timestamped names.
+
+Run on your own computer (Python 3, no extra packages needed):
+    python3 download_hf.py
+"""
+import os
+import urllib.request
+
+IMAGES = [
+    ("001_0m00s_2am-border-west-africa.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231533_bfe977d9-9ad0-47ae-9c4f-eb9180716b10.png"),
+    ("002_0m04s_truck-waiting-6-days.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231627_d69da0a2-69ab-4fb3-85ec-362b1cff8d3a.png"),
+    ("003_0m07s_cargo-fresh-produce.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231533_62b02570-30c6-47ed-97a4-0543573de5ce.png"),
+    ("004_0m09s_produce-starting-to-turn.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231531_79a09cf6-0ddd-42fd-bedd-58ad9c409078.png"),
+    ("005_0m11s_driver-has-every-document.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231532_e2a3ce99-5102-4891-9615-c357f7306696.png"),
+    ("006_0m14s_trade-is-allowed.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231627_a93fb226-fbf8-4558-b49f-8903fa5df3df.png"),
+    ("007_0m16s_a-treaty-says-so.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231627_8eb0c3fe-94aa-4827-8379-4aa518e58eed.png"),
+    ("008_0m18s_why-still-waiting.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231531_c08f70b4-ac3a-43e1-adf4-8f2e1bc08438.png"),
+    ("009_0m20s_stay-with-me.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231532_f154083f-ff25-4d79-b98d-672372d0b195.png"),
+    ("010_0m21s_by-the-end-you-will-see.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231533_0061239f-0b51-463a-9117-40d7d74d43da.png"),
+    ("011_0m25s_who-is-getting-rich.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231626_e8b2f474-187d-471e-8f45-747d85b6996f.png"),
+    ("012_0m28s_2018-leaders-sign.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231531_701818c7-9c24-4796-87fa-b9716a7d2414.png"),
+    ("013_0m33s_afcfta-name.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231626_5639ab38-d6a6-45f4-89f6-a4761dbe47fd.png"),
+    ("014_0m39s_54-countries-signed.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231626_60f340b1-424a-4cf9-bdc4-466da33dbd4b.png"),
+    ("015_0m41s_over-a-billion-people.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231626_9d821d75-ad1d-4755-a6a1-434cdf08b03d.png"),
+    ("016_0m43s_combined-economy-trillions.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231627_6b42928d-5cc7-405c-b05a-53c85422d53a.png"),
+    ("017_0m46s_largest-free-trade-area.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231703_bd9c7acc-e0b2-4eda-be24-87557c799236.png"),
+    ("018_0m50s_the-idea-is-simple.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231703_fc0e87a7-9416-498a-a72e-cade23b01052.png"),
+    ("019_0m52s_remove-tariffs.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231703_2f42acd7-1486-4ae5-9c94-7d627b632dd9.png"),
+    ("020_0m54s_africans-sell-to-africans.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231703_306fa341-ad5b-4e35-a56f-02ac61b0f4e3.png"),
+    ("021_0m56s_kenya-factory-feeds-ghana-shop.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231704_1e03f890-af42-4a92-b90a-af5436e333a1.png"),
+    ("022_0m59s_lift-millions-out-of-poverty.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231704_d44092d3-ed60-477f-9677-c7fcb8244871.png"),
+    ("023_1m05s_trading-began-2021.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231705_e4e585ab-b973-4e2d-9b6e-6d6a529b4588.png"),
+    ("024_1m08s_door-is-open.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231704_a5086eed-9224-4968-b706-e22bd45e741a.png"),
+    ("025_1m10s_trucks-still-waiting.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231734_1daa3bb8-4b18-476c-988c-9a0d09e72d43.png"),
+    ("026_1m13s_reason-not-in-treaty.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231733_da153acf-fed3-4dfa-a402-58c020eb351c.png"),
+    ("027_1m16s_its-older.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231735_dbeab095-a647-4767-8502-88f31ff92b49.png"),
+    ("028_1m17s_much-older.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231735_ec6b00da-4d2f-40a9-a32e-a64b3105fd61.png"),
+    ("029_1m18s_its-on-a-map.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231735_deac851f-a588-4a3b-8af8-ea5f636f8602.png"),
+    ("030_1m19s_africas-old-railways.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231734_c1989cd9-8236-4691-ac3d-4a3455c693ec.png"),
+    ("031_1m22s_dont-connect-neighbours.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231733_6d9c7d83-927b-4d73-b629-e471d85c3379.png"),
+    ("032_1m24s_dont-connect-capitals.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231734_c59944f1-97a1-4b6f-91a5-5b19b492d6a6.png"),
+    ("033_1m25s_mines-to-the-coast.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231807_742f5383-7f3e-4ee4-b0c9-88ffac843c00.png"),
+    ("034_1m29s_inland-to-port-1.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231808_6e236754-9437-4488-a7b6-e6a12acbee48.png"),
+    ("035_1m31s_inland-to-port-2.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231808_3a166c69-2ee8-4468-8b2b-044f12ae17a7.png"),
+    ("036_1m33s_over-and-over.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231808_9c273f5b-1d47-40d1-a217-db1337c90b07.png"),
+    ("037_1m34s_never-built-to-move-africans.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231807_897db79c-77fc-4656-8446-cd6f5887cf6e.png"),
+    ("038_1m38s_built-to-move-resources.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231808_88b3a66f-d48b-4cfb-9a41-48c4a98ec181.png"),
+    ("039_1m40s_out.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231807_11adb415-e7a7-4535-9c02-5df87859fcd5.png"),
+    ("040_1m41s_roads-same-logic.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231809_48654c9a-da77-4472-b629-9ddfaa52283a.png"),
+    ("041_1m43s_ports-same-logic.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231840_83f30452-eff2-4fbb-887d-b2f4e9e5792b.png"),
+    ("042_1m45s_phone-lines-via-europe.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231839_7787426a-f46a-4c78-8be2-45f38c1c9f35.png"),
+    ("043_1m48s_wired-to-face-outward.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231840_ab28decc-5e5d-4f48-bf93-e00f52e800d3.png"),
+    ("044_1m52s_independence-changed-flags.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231840_b6611a4f-15cf-41a7-9c55-d047697d6bee.png"),
+    ("045_1m54s_did-not-change-wiring.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231839_87950ff3-0611-49aa-93d0-12fb3486548d.png"),
+    ("046_1m57s_wiring-leaves-fingerprint.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231840_8d5daab0-182b-4a30-9606-41c2681b0b07.png"),
+    ("047_1m59s_one-number.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231839_ea3b8faa-382f-4cc9-8f45-544271a25249.png"),
+    ("048_2m00s_hold-onto-it.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231840_c95f2a0a-f71b-487c-9763-b3e416c9e773.png"),
+    ("049_2m01s_roughly-15-percent.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231913_69b20e85-edd0-4b04-8b05-a1ddb5b5040d.png"),
+    ("050_2m03s_africa-trade-between-countries.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231912_b01f4e63-f6ad-493e-9c78-26b49946df45.png"),
+    ("051_2m08s_europe-two-thirds.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231911_3eb16dfa-193b-4c88-ac09-3136da1f61e5.png"),
+    ("052_2m10s_asia-more-than-half.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231912_fd050e73-a3ce-4451-b691-91768b9eb72c.png"),
+    ("053_2m13s_sell-raw-buy-finished.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231912_e9b81bc7-54d8-4170-b327-20b492be0bcc.png"),
+    ("054_2m18s_exports-cocoa.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231911_071e811e-2aff-43b1-b209-f185ccef4eab.png"),
+    ("055_2m20s_imports-chocolate.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231914_8b83d5fd-945d-4198-b43e-f08c4a5954df.png"),
+    ("056_2m23s_15-percent.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231912_97188015-4b51-42c9-bb9a-093d5543228a.png"),
+    ("057_2m24s_scar-left-by-map.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231942_af850b98-7148-4d2c-9afd-d25c59ec09f2.png"),
+    ("058_2m27s_treaty-supposed-to-erase.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231943_4a0076ce-169a-4a40-86ea-3c35b2eeb3c6.png"),
+    ("059_2m29s_signature-cant-build-railway.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231942_5d743258-74c3-4b4e-8fe9-90b9099e01e4.png"),
+    ("060_2m32s_only-first-problem.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231942_4240724b-be86-4d62-897b-5f2a910125fc.png"),
+    ("061_2m34s_three-more.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231942_546dda20-12af-425c-af33-c761b137eafc.png"),
+    ("062_2m36s_not-in-headlines.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231943_03426e3b-063c-49d0-a720-b2bbf82b644b.png"),
+    ("063_2m38s_toll-1-paperwork.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231943_1e06aa44-afa2-4b0a-bf6c-b5ca0ed46b03.png"),
+    ("064_2m40s_tariff-a-number-you-see.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_231943_a68a8617-f342-4291-9584-de1599237dd1.png"),
+    ("065_2m43s_paperwork-a-maze.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232014_fe9762db-388b-4f02-a6ea-ab0dfa94fd45.png"),
+    ("066_2m45s_different-forms.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232014_edeb9ec4-5332-4797-a385-38df5b93b528.png"),
+    ("067_2m47s_different-inspections.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232014_9cf6db7b-7868-4b1a-9700-08d271be0bf6.png"),
+    ("068_2m48s_different-rules-every-border.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232013_5b4fb512-389f-419c-bdae-0da5b6602cc4.png"),
+    ("069_2m50s_tariff-free-still-stuck.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232013_9bae8ca0-4223-4909-9ef1-508ab8b51c37.png"),
+    ("070_2m55s_every-hour-costs-money.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232013_abbd0021-7556-481d-a3d4-40ad326a7a2f.png"),
+    ("071_2m57s_fresh-food-costs-product.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232014_cdc505ff-b670-4927-a9ec-116e3e5dc515.png"),
+    ("072_3m00s_toll-2-rules-of-origin.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232014_5ec7289b-6335-4423-87c0-562f7890a514.png"),
+    ("073_3m03s_must-be-made-in-africa.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232047_0b8537d3-ce6d-4bdd-8736-f8f89826d6e4.png"),
+    ("074_3m08s_enough-of-it-anyway.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232046_868b2087-bcd6-4e91-ac16-6e1b4e533240.png"),
+    ("075_3m09s_prove-it.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232045_3d1c5d3e-6f35-4fff-af63-e6d1c6162b3e.png"),
+    ("076_3m10s_with-documents.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232046_0c0c172c-aa26-4bef-a3f2-6b5439dbba98.png"),
+    ("077_3m11s_for-every-shipment.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232046_c85519ff-c6e7-421b-ad8f-1fd5a1d40b4f.png"),
+    ("078_3m13s_small-business-loses-deal.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232046_6e989a42-1011-4960-84b3-b24d40a2ec3a.png"),
+    ("079_3m17s_toll-3-money.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232046_26aebcda-6563-4409-a835-e5370b585a5e.png"),
+    ("080_3m19s_dozens-of-currencies.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232045_c7a07472-fff3-4324-98eb-8983b25762c1.png"),
+    ("081_3m21s_hard-to-convert.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232118_d9ced75c-798a-4c1a-8dc3-06cd2f1d7749.png"),
+    ("082_3m23s_sell-one-country-to-another.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232116_86ba5619-0835-4ec7-ab44-41918a0a0945.png"),
+    ("083_3m26s_payment-travels-abroad.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232117_87a20cca-ed1a-4793-9c48-918a0f632677.png"),
+    ("084_3m29s_money-leaves-continent.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232117_410b1715-5028-4064-a4a6-40e3590ce464.png"),
+    ("085_3m31s_comes-back.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232116_23bb15da-10a3-464a-89c0-4f5bfc16eedc.png"),
+    ("086_3m32s_someone-takes-a-cut.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232117_23f279de-b37e-4d1c-97bd-11da1b0a2f6f.png"),
+    ("087_3m35s_three-tolls.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232117_a807542a-1be8-4e76-b408-6de8ee65b1ed.png"),
+    ("088_3m36s_none-a-tariff.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232118_f745e44f-418c-47a7-88bc-8df68bd3f63c.png"),
+    ("089_3m37s_none-fixed-by-signature.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232151_9d0aa419-a2ed-46a0-ac49-d20e479da23a.png"),
+    ("090_3m39s_why-truck-still-waiting.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232151_acbdd553-da1d-4666-926d-0d03eaafddd3.png"),
+    ("091_3m42s_something-is-changing.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232150_db849a55-a36c-4706-8639-9b86f27cb6c5.png"),
+    ("092_3m44s_if-you-know-where-to-look.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232151_c4243f22-cdb9-4386-9a99-5d53c15b9d6c.png"),
+    ("093_3m46s_headlines-say-stuck-others-watch.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232149_7f7b16f4-5988-46c3-ac03-1b2c3f6d6baa.png"),
+    ("094_3m51s_not-governments.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232150_8d12556d-1521-43ac-b54c-b4b51b399aa9.png"),
+    ("095_3m53s_not-diplomats.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232150_e4db9a29-5b9c-4dc9-9641-aa73c3a54a70.png"),
+    ("096_3m54s_middlemen.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232150_f69e4a6b-1b0f-4f3b-8f5d-2e3c26645d0d.png"),
+    ("097_3m55s_freight-forwarders.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232222_0bd0a58a-bcc3-44b6-b271-a80230ca268d.png"),
+    ("098_3m58s_customs-brokers-clear-fast.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232223_8717d2c9-0292-4fd3-b4a9-e380b22514d5.png"),
+    ("099_4m01s_payment-startups-bridge.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232222_b04d4c87-499a-4df6-83de-063060d9008d.png"),
+    ("100_4m05s_warehouse-stock-early.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232223_8d4008e8-de8e-4725-8684-fac1b74c8f9d.png"),
+    ("101_4m08s_not-waiting-for-perfect.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232223_d013103b-f1ec-43b5-93b9-70968756aad4.png"),
+    ("102_4m11s_selling-cure-for-friction.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232223_571c09f9-a48c-4ff9-9a7e-737e3f3c9d81.png"),
+    ("103_4m13s_every-delay-a-customer.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232224_d8c3e6e3-a97c-4633-8239-eb2c46fd421e.png"),
+    ("104_4m15s_confusing-form-is-a-service.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232223_0d6b112c-4193-4277-98df-89106bd7d948.png"),
+    ("105_4m19s_not-betting-treaty-fails.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232253_04bc3385-171a-4b44-b452-64276646e6e7.png"),
+    ("106_4m21s_betting-it-works.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232252_1b6fb9a1-b1a9-4cc9-a845-b1563b5983ba.png"),
+    ("107_4m23s_slowly.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232252_9227c643-2bde-4af2-a56e-22cb1be0cdc2.png"),
+    ("108_4m24s_someone-has-to-make-it-work.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232253_d2ba4f53-1af0-4334-9d8c-e653affdefc5.png"),
+    ("109_4m27s_whats-the-lesson.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232253_3467435a-90d3-41c5-aedc-98d93eed559a.png"),
+    ("110_4m28s_opportunity-never-the-agreement.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232254_303bc05a-e003-447d-8488-0d32133f9731.png"),
+    ("111_4m31s_agreement-just-a-door.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232252_d6b7b4f5-73b5-4253-a171-55719feaa51f.png"),
+    ("112_4m33s_money-in-the-hallway.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232253_753d5a87-65ec-44f7-b074-a547d85ab6c4.png"),
+    ("113_4m35s_in-the-delays.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232327_4c7b7d6d-7c55-4f44-b114-3eb6bb67efd1.png"),
+    ("114_4m36s_in-the-confusion.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232326_0e535880-b906-4669-9e1f-5ef4424c5482.png"),
+    ("115_4m38s_problems-paperwork-forgot.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232328_692caf4b-22c1-4d30-8659-c86d50a7c4f1.png"),
+    ("116_4m41s_didnt-need-better-treaty.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232327_6366dcab-cbb1-4881-b80e-3b9e0bf2fd41.png"),
+    ("117_4m43s_needs-people-make-it-usable.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232327_514edcc9-f6f0-47e6-8fb3-e138c43fc217.png"),
+    ("118_4m46s_solve-the-friction.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232326_598d19a8-53a1-47e9-a964-24b019b72362.png"),
+    ("119_4m48s_not-waiting-on-future.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232326_8c04a505-8860-4c93-89fe-7d48ec0e78bd.png"),
+    ("120_4m50s_youre-the-one-who-builds-it.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261022_232327_76f07b1c-4f5c-4cd6-b759-f9c159d49fcd.png"),
+]
 
 os.makedirs("hf_images", exist_ok=True)
-for line in open("hf_jobs.tsv"):
-    idx, job, url = line.split("\t")
-    i = int(idx)
-    ts, slug, _ = S[i - 1]
-    m, s = ts.split(":")
-    out = f"hf_images/{i:03d}_{int(m)}m{int(s):02d}s_{slug}.png"
-    if not os.path.exists(out):
-        subprocess.run(["curl", "-sSf", "-o", out, url.strip()], check=True)
-print(len(os.listdir("hf_images")), "files")
+for name, url in IMAGES:
+    path = os.path.join("hf_images", name)
+    if os.path.exists(path):
+        continue
+    print("downloading", name)
+    urllib.request.urlretrieve(url, path)
+print("done:", len(os.listdir("hf_images")), "files in hf_images/")
