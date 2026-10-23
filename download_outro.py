@@ -1,9 +1,10 @@
 """Download the 8 outro images into ./outro_images with their timestamped names.
 
 Run on your own computer (Python 3, no extra packages needed):
-    python3 download_outro.py
+    python3 download_outro.py [output_folder]
 """
 import os
+import sys
 import urllib.request
 
 IMAGES = [
@@ -17,10 +18,11 @@ IMAGES = [
     ("08_0m27s_unlocked-africa.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261023_114341_4e54e614-763a-418f-bce2-ff761441c366.png"),
 ]
 
-os.makedirs("outro_images", exist_ok=True)
+OUT = sys.argv[1] if len(sys.argv) > 1 else "outro_images"
+os.makedirs(OUT, exist_ok=True)
 for name, url in IMAGES:
-    path = os.path.join("outro_images", name)
+    path = os.path.join(OUT, name)
     if not os.path.exists(path):
         print("downloading", name)
         urllib.request.urlretrieve(url, path)
-print("done:", len(os.listdir("outro_images")), "files in outro_images/")
+print("done:", len(os.listdir(OUT)), "files in", OUT)
