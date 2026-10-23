@@ -1,0 +1,26 @@
+"""Download the 8 outro images into ./outro_images with their timestamped names.
+
+Run on your own computer (Python 3, no extra packages needed):
+    python3 download_outro.py
+"""
+import os
+import urllib.request
+
+IMAGES = [
+    ("01_0m00s_one-door-unlocked-many-more.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261023_114341_8704850f-1d2e-4cd2-894f-f8b98d3b4834.png"),
+    ("02_0m04s_hit-the-like-button.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261023_114341_b29b5935-23b2-4565-9a7c-243e75216a43.png"),
+    ("03_0m07s_youtube-shows-it-to-someone-else.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261023_114342_5068511a-2f5a-456d-ab88-10cd2daf6701.png"),
+    ("04_0m11s_subscribe-for-the-next-one.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261023_114341_48c7edbc-70b8-447f-8872-38bc6aed1dcd.png"),
+    ("05_0m14s_every-week-another-door.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261023_114340_56c9fc39-dd27-4208-8900-04abd3ae2154.png"),
+    ("06_0m18s_what-surprised-you-comment.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261023_114342_06c62602-162d-454a-b8fc-640e05502430.png"),
+    ("07_0m21s_watch-the-video-on-screen.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261023_114345_e12482c8-77d8-42e0-be4f-3c95106b0e42.png"),
+    ("08_0m27s_unlocked-africa.png", "https://d8j0ntlcm91z4.cloudfront.net/user_3Kq8IWvi9gT29VWT7AzVa7kKv96/hf_20261023_114341_4e54e614-763a-418f-bce2-ff761441c366.png"),
+]
+
+os.makedirs("outro_images", exist_ok=True)
+for name, url in IMAGES:
+    path = os.path.join("outro_images", name)
+    if not os.path.exists(path):
+        print("downloading", name)
+        urllib.request.urlretrieve(url, path)
+print("done:", len(os.listdir("outro_images")), "files in outro_images/")
