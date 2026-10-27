@@ -6,6 +6,7 @@ on:
     branches: [master]
     paths:
       - burkina_jobs.tsv
+      - burkina_extra_jobs.tsv
 
 permissions:
   contents: write
@@ -21,8 +22,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Download images into images/burkina
-        run: python3 import_images.py burkina_jobs.tsv images/burkina
+      - name: Download images into images/burkina and images/burkina/extra_shots
+        run: |
+          python3 import_images.py burkina_jobs.tsv images/burkina
+          python3 import_images.py burkina_extra_jobs.tsv images/burkina/extra_shots
       - name: Commit images
         run: |
           git config user.name "github-actions[bot]"
