@@ -23,7 +23,7 @@ EXTRAS = [
     (18, 101, "billions-of-revenue", "outdoor savannah next to a gold mine: stacks of gold bars rising higher and higher like a bar chart, a smiling stick-figure investor looking up at them"),
     (18, 103, "moving-the-goalposts", "outdoor red-earth football pitch: a stick figure carrying the goalposts to a new spot halfway through the match, a stick-figure investor player with open-oval shocked eyes"),
     (19, 108, "whole-region-worried", "flat map of West Africa with bold outlines, many small gold mine icons scattered across several countries, each mine icon with a small worried face"),
-    (20, 115, "copying-the-deal", "pure white background: a photocopier printing copies of the same deal document, stick-figure officials from several countries each walking away holding a copy"),
+    (20, 115, "copying-the-deal", "pure white background: a photocopier printing copies of the same deal document with a small gold mine icon on it, four stick-figure officials in plain suits of different muted colours (no flags, no national symbols) each walking away holding a copy"),
     (21, 120, "taking-fear-seriously", "indoor office: a serious stick-figure official nodding and writing notes while a worried investor explains, a balance scale with a heavy weight on the desk"),
     (22, 125, "government-storybook", "pure white background: a stick-figure government official opening a large storybook, a gold mine and a cotton field rising out of its pages"),
     (23, 132, "dig-it-ship-it", "split vertically by a black dashed line: left a stick-figure miner digging raw ore; right a truck driving away loaded with raw ore and cotton bales"),
