@@ -1,0 +1,37 @@
+name: Import Burkina Faso video images from Higgsfield
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - burkina_jobs.tsv
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-burkina-images
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download images into images/burkina
+        run: python3 import_images.py burkina_jobs.tsv images/burkina
+      - name: Commit images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add images/burkina
+          if git diff --cached --quiet; then
+            echo "No new images to commit"
+          else
+            git commit -m "Import Burkina Faso video images into images/burkina"
+            git pull --rebase origin master
+            git push
+          fi
